@@ -1,40 +1,55 @@
 package storage
 
-import "ToDo/internal/domain"
+import (
+	"ToDo/internal/domain"
+	errors "ToDo/internal/errs"
+)
 
-//структура сторадж ЧТо должнна содержать?
 type Storage struct {
-	tasks  map[string]domain.Task
-	events []domain.Event
+	tasks map[string]domain.Task
 }
 
-//конструктор новый сторадж для валидации
-func NewStorage() {
-
+func NewStorage() *Storage {
+	storage := Storage{
+		tasks: make(map[string]domain.Task),
+	}
+	return &storage
 }
 
-//метод для добавляения задачи и валидации
-func (p *Storage) Add() {
+// метод для добавляения задачи и валидации
+func (s *Storage) Add(task domain.Task) {
+
+	s.tasks[task.Title] = task
 
 }
 
 //метод возврата всех задач
 
-func (p Storage) GetAll() {
-
+func (s *Storage) GetAll() map[string]domain.Task {
+	return s.tasks
 }
 
-//метод удаления задачи
-func (p *Storage) Delete() {
+func (s *Storage) Delete(title string) error {
 
+	_, ok := s.tasks[title]
+	if !ok {
+		return errors.TaskNotFound
+
+	}
+
+	delete(s.tasks, title)
+	return nil
 }
 
-// метод для того чтобы ставить задаче статус выполнено
-func (p *Storage) MarkDone() {
+func (s *Storage) MarkDone(title string) error {
 
-}
+	task, ok := s.tasks[title]
+	if !ok {
+		return errors.TaskNotFound
+	}
 
-// метод для возврата событий
-func (p Storage) GetEvents() {
+	task.Done()
 
+	s.tasks[title] = task
+	return nil
 }
