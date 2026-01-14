@@ -1,7 +1,11 @@
 package storage
 
+import "ToDo/internal/domain"
+
 //структура сторадж ЧТо должнна содержать?
 type Storage struct {
+	tasks  map[string]domain.Task
+	events []domain.Event
 }
 
 //конструктор новый сторадж для валидации
@@ -10,7 +14,7 @@ func NewStorage() {
 }
 
 //метод для добавляения задачи и валидации
-func (p *Storage) AddTask() {
+func (p *Storage) Add() {
 
 }
 
@@ -21,7 +25,7 @@ func (p Storage) GetAll() {
 }
 
 //метод удаления задачи
-func (p *Storage) DeleteTask() {
+func (p *Storage) Delete() {
 
 }
 
