@@ -2,7 +2,6 @@ package storage
 
 import (
 	"ToDo/internal/domain"
-	errors "ToDo/internal/errs"
 )
 
 type Storage struct {
@@ -33,7 +32,7 @@ func (s *Storage) Delete(title string) error {
 
 	_, ok := s.tasks[title]
 	if !ok {
-		return errors.TaskNotFound
+		return TaskNotFound
 
 	}
 
@@ -45,7 +44,7 @@ func (s *Storage) MarkDone(title string) error {
 
 	task, ok := s.tasks[title]
 	if !ok {
-		return errors.TaskNotFound
+		return TaskNotFound
 	}
 
 	task.Done()

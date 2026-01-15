@@ -10,96 +10,177 @@ import (
 )
 
 type Service struct {
-	store *storage.Storage
+	store  *storage.Storage
+	events []domain.Event
+}
+
+func NewService(st *storage.Storage) *Service {
+	return &Service{
+		store:  st,
+		events: make([]domain.Event, 0),
+	}
 }
 
 func (s *Service) Start() {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-
 		PrintPrompt()
 
-		ok := scanner.Scan()
-		if !ok {
+		if !scanner.Scan() {
+			PrintExit()
 			return
 		}
 
 		inputString := scanner.Text()
 
-		result, err := s.ProcessComand(inputString)
+		shouldExit, err := s.ProcessCommand(inputString)
+
+		var status string
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Ошибка:", err)
+			status = fmt.Sprintf("Error: %v", err)
+		} else {
+			status = "Success"
 		}
 
-		if result == "e" {
+		event := domain.NewEvent(inputString, status)
+		s.events = append(s.events, event)
+
+		if shouldExit {
 			PrintExit()
 			return
 		}
-
 	}
 }
-
-func (s *Service) ProcessComand(inputstr string) (string, error) {
-	fields := strings.Fields(inputstr)
+func (s *Service) ProcessCommand(inputStr string) (shouldExit bool, err error) {
+	fields := strings.Fields(inputStr)
 
 	if len(fields) == 0 {
-		return "", EmptyInput
+		return false, EmptyInput
 	}
 
 	cmd := fields[0]
 
-	if cmd == "Exit" || cmd == "exit" {
-		Exit := "e"
-		return Exit, nil
+	switch cmd {
 
-	}
-
-	if cmd == "Add" || cmd == "add" {
-
-		add, err := s.Add(fields)
+	case "Events", "events":
+		err := s.Events(fields)
 		if err != nil {
-			fmt.Println(err)
+			return false, err
 		}
+		return false, nil
 
+	case "Help", "help":
+		err := s.Help(fields)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+
+	case "Exit", "exit":
+		return true, nil
+
+	case "Add", "add":
+		err := s.Add(fields)
+		if err != nil {
+			return false, err
+		}
 		AddTrue()
+		return false, nil
 
-		return add, nil
+	case "List", "list":
+		err := s.List(fields)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+
+	case "Done", "done":
+		err := s.Done(fields)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+
+	case "Del", "del":
+		err := s.Delete(fields)
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+
+	default:
+		return false, fmt.Errorf("unknown command: %s", cmd)
 	}
-
-	if cmd == "List" || cmd == "list" {
-
-
-	}
-
-	return "", nil
 }
 
-func (s *Service) Add(fields []string) (string, error) {
+func (s *Service) Events(fields []string) error {
+	if len(fields) != 1 {
+		return WrongArgs
+	}
+	PrintEvents(s.events)
+	return nil
+}
 
+func (s *Service) Help(fields []string) error {
+
+	if len(fields) != 1 {
+		return WrongArgs
+	}
+	PrintHelp()
+	return nil
+
+}
+func (s *Service) Add(fields []string) error {
 	if len(fields) < 3 {
-		return "", WrongArgs
+		return WrongArgs
 	}
 
 	title := fields[1]
+	taskText := strings.Join(fields[2:], " ")
 
-	taskText := ""
+	task := domain.NewTask(title, taskText)
+	s.store.Add(task)
 
-	for i := 2; i < len(fields); i++ {
-
-		taskText += fields[i]
-
-		if i != len(fields)-1 {
-			taskText += " "
-		}
-
-		task := domain.NewTask(title, taskText)
-		s.store.Add(task)
-
-	}
-
-	return "Great", nil
+	return nil
 }
 
+func (s *Service) List(fields []string) error {
+	if len(fields) != 1 {
+		return WrongArgs
+	}
 
-func 
+	tasks := s.store.GetAll()
+	printTasks(tasks)
+	return nil
+}
+
+func (s *Service) Done(fields []string) error {
+	if len(fields) != 2 {
+		return WrongArgs
+	}
+
+	title := fields[1]
+	err := s.store.MarkDone(title)
+	if err != nil {
+		return err
+	}
+
+	PrintDone(title)
+	return nil
+
+}
+
+func (s *Service) Delete(fields []string) error {
+	if len(fields) != 2 {
+		return WrongArgs
+	}
+	title := fields[1]
+	err := s.store.Delete(title)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
