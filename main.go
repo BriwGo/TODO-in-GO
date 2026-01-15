@@ -1,8 +1,15 @@
 package main
 
+import (
+	"ToDo/internal/app"
+	"ToDo/internal/storage"
+)
+
 func main() {
 
-	//иницилизировать экземпляр стораджа
-	//точка входа внутри бесконечного цикла
+	st := storage.NewStorage()
 
+	todoService := app.NewService(st)
+
+	todoService.Start()
 }
