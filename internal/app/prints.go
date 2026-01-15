@@ -49,7 +49,7 @@ func PrintPrompt() {
                                                   ....::-=@=:...
                                                    ...::%::.:..
 	`
-	fmt.Println(logo)
+	_ = logo
 	fmt.Print("Enter a Command: ")
 }
 
