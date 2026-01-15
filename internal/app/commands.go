@@ -1,6 +1,7 @@
 package app
 
 import (
+	"ToDo/internal/domain"
 	"ToDo/internal/storage"
 	"bufio"
 	"fmt"
@@ -12,40 +13,93 @@ type Service struct {
 	store *storage.Storage
 }
 
-// тут паристится строка и передается в командс го
-// Берет строуку  по принципу : команда,аргумент 1,аргумент 2
-func Parser() {
-
+func (s *Service) Start() {
 	scanner := bufio.NewScanner(os.Stdin)
-	if ok := scanner.Scan(); !ok {
-		fmt.Println("Input Error")
-	}
 
-	text := scanner.Text()
-	fields := strings.Fields(text)
+	for {
+
+		PrintPrompt()
+
+		ok := scanner.Scan()
+		if !ok {
+			return
+		}
+
+		inputString := scanner.Text()
+
+		result, err := s.ProcessComand(inputString)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if result == "e" {
+			PrintExit()
+			return
+		}
+
+	}
+}
+
+func (s *Service) ProcessComand(inputstr string) (string, error) {
+	fields := strings.Fields(inputstr)
 
 	if len(fields) == 0 {
-		fmt.Println("Lenght to low")
+		return "", EmptyInput
 	}
 
 	cmd := fields[0]
 
-	if cmd == "leave" || cmd == "Leave" {
-		fmt.Println("OK")
-		return
+	if cmd == "Exit" || cmd == "exit" {
+		Exit := "e"
+		return Exit, nil
+
 	}
 
 	if cmd == "Add" || cmd == "add" {
 
-	} else if cmd == "Delete" || cmd == "delete" {
+		add, err := s.Add(fields)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		AddTrue()
+
+		return add, nil
+	}
+
+	if cmd == "List" || cmd == "list" {
+
 
 	}
 
+	return "", nil
 }
 
-// метод который должен парсить, определять первое слово(пользовательский ввод)
-// в зависимости от команды указывает место хранилищу
+func (s *Service) Add(fields []string) (string, error) {
 
-func (s *Service) ProcessComand(input string) {
+	if len(fields) < 3 {
+		return "", WrongArgs
+	}
 
+	title := fields[1]
+
+	taskText := ""
+
+	for i := 2; i < len(fields); i++ {
+
+		taskText += fields[i]
+
+		if i != len(fields)-1 {
+			taskText += " "
+		}
+
+		task := domain.NewTask(title, taskText)
+		s.store.Add(task)
+
+	}
+
+	return "Great", nil
 }
+
+
+func 
